@@ -4,7 +4,7 @@ import Main from './Main.jsx';
 import Settings from './Settings.jsx';
 
 const content = ({content}) => (
-  <div>
+  <div className="container">
     {content === 'main' ? <Main /> : <Settings />}
   </div>
 );
