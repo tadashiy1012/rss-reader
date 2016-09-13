@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
+exports.changeUrlInputVal = exports.flushUrls = exports.delUrl = exports.addUrl = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
 
 var _reduxActions = require('redux-actions');
 
@@ -12,6 +12,10 @@ var slctMain = exports.slctMain = (0, _reduxActions.createAction)('SLCT_MAIN');
 var slctSet = exports.slctSet = (0, _reduxActions.createAction)('SLCT_SET');
 var setShows = exports.setShows = (0, _reduxActions.createAction)('SET_SHOWS');
 var showCard = exports.showCard = (0, _reduxActions.createAction)('SHOW_CARD');
+var addUrl = exports.addUrl = (0, _reduxActions.createAction)('ADD_URL');
+var delUrl = exports.delUrl = (0, _reduxActions.createAction)('DEL_URL');
+var flushUrls = exports.flushUrls = (0, _reduxActions.createAction)('FLUSH_URLS');
+var changeUrlInputVal = exports.changeUrlInputVal = (0, _reduxActions.createAction)('CHANGE_URL_INPUT_VAL');
 
 },{"redux-actions":326}],2:[function(require,module,exports){
 'use strict';
@@ -288,12 +292,13 @@ var _react2 = _interopRequireDefault(_react);
 
 var _reactRedux = require('react-redux');
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _actions = require('../actions');
 
-var sampleData = ['hogehoge', 'fugafuga', 'piyopiyo'];
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Item = function Item(_ref) {
   var text = _ref.text;
+  var handleUrlDel = _ref.handleUrlDel;
   return _react2.default.createElement(
     'li',
     { className: 'collection-item' },
@@ -304,7 +309,9 @@ var Item = function Item(_ref) {
     ),
     _react2.default.createElement(
       'a',
-      { className: 'secondary-content' },
+      { href: '#', className: 'secondary-content', onClick: function onClick() {
+          handleUrlDel(text);
+        } },
       _react2.default.createElement(
         'i',
         { className: 'material-icons' },
@@ -314,13 +321,18 @@ var Item = function Item(_ref) {
   );
 };
 
-var sampleItems = function sampleItems() {
-  return sampleData.map(function (data) {
-    return _react2.default.createElement(Item, { text: data });
+var loadUrls = function loadUrls(urls, func) {
+  return urls.map(function (url, idx) {
+    return _react2.default.createElement(Item, { key: idx, text: url, handleUrlDel: func });
   });
 };
 
-var settings = function settings() {
+var settings = function settings(_ref2) {
+  var value = _ref2.value;
+  var urls = _ref2.urls;
+  var handleValChange = _ref2.handleValChange;
+  var handleUrlDel = _ref2.handleUrlDel;
+  var handleUrlAdd = _ref2.handleUrlAdd;
   return _react2.default.createElement(
     'div',
     null,
@@ -332,14 +344,14 @@ var settings = function settings() {
     _react2.default.createElement(
       'div',
       { className: 'input-field col s12' },
-      _react2.default.createElement('input', { type: 'text', className: 'validate', placeholder: 'url' })
+      _react2.default.createElement('input', { type: 'text', className: 'validate', placeholder: 'url', value: value, onChange: handleValChange })
     ),
     _react2.default.createElement(
       'div',
       null,
       _react2.default.createElement(
         'button',
-        { className: 'btn-large waves-effect waves-light center-align' },
+        { className: 'btn-large waves-effect waves-light center-align', onClick: handleUrlAdd },
         'Add URL',
         _react2.default.createElement(
           'i',
@@ -351,24 +363,37 @@ var settings = function settings() {
     _react2.default.createElement(
       'ul',
       { className: 'collection' },
-      sampleItems()
+      loadUrls(urls, handleUrlDel)
     )
   );
 };
 
 var mapStateToProps = function mapStateToProps(state, props) {
-  return state;
+  return {
+    value: state.urlInputVal,
+    urls: state.urls
+  };
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
-  return {};
+  return {
+    handleUrlAdd: function handleUrlAdd() {
+      dispatch((0, _actions.addUrl)());
+    },
+    handleUrlDel: function handleUrlDel(url) {
+      dispatch((0, _actions.delUrl)(url));
+    },
+    handleValChange: function handleValChange(ev) {
+      dispatch((0, _actions.changeUrlInputVal)(ev.target.value));
+    }
+  };
 };
 
 var Settings = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(settings);
 
 exports.default = Settings;
 
-},{"react":320,"react-redux":173}],7:[function(require,module,exports){
+},{"../actions":1,"react":320,"react-redux":173}],7:[function(require,module,exports){
 'use strict';
 
 var _react = require('react');
@@ -450,17 +475,30 @@ var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProp
     cardShows: action.payload
   });
 }), _defineProperty(_handleActions, _actions.showCard, function (state, action) {
-  console.log(action.payload);
   var obj = Object.assign({}, state.cardShows, _defineProperty({}, action.payload[0], action.payload[1]));
-  console.log(obj);
   var result = Object.assign({}, state, {
     cardShows: obj
   });
-  console.log(result);
   return result;
+}), _defineProperty(_handleActions, _actions.changeUrlInputVal, function (state, action) {
+  return Object.assign({}, state, {
+    urlInputVal: action.payload
+  });
+}), _defineProperty(_handleActions, _actions.addUrl, function (state, action) {
+  return Object.assign({}, state, {
+    urls: [state.urlInputVal].concat(state.urls)
+  });
+}), _defineProperty(_handleActions, _actions.delUrl, function (state, action) {
+  return Object.assign({}, state, {
+    urls: state.urls.filter(function (val, idx, ary) {
+      return val !== action.payload;
+    })
+  });
 }), _handleActions), {
   content: 'main',
-  cardShows: { hoge: 'hoge' }
+  cardShows: { hoge: 'hoge' },
+  urlInputVal: 'hoge',
+  urls: ['http://hogehoge', 'http://fugafuga', 'http://piyopiyo']
 });
 
 exports.default = reducer;
