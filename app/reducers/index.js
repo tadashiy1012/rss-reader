@@ -1,6 +1,8 @@
 import {handleAction, handleActions} from 'redux-actions';
 import {slctMain, slctSet,
-  setShows, showCard} from '../actions';
+  setShows, showCard,
+  addUrl, delUrl, changeUrlInputVal
+} from '../actions';
 
 const reducer = handleActions({
   [slctMain]: (state, action) => Object.assign({}, state, {
@@ -13,20 +15,34 @@ const reducer = handleActions({
     cardShows: action.payload
   }),
   [showCard]: (state, action) => {
-    console.log(action.payload);
     let obj = Object.assign({}, state.cardShows, {
       [action.payload[0]]: action.payload[1]
     });
-    console.log(obj);
     let result = Object.assign({}, state, {
       cardShows: obj
     });
-    console.log(result);
     return result;
-  }
+  },
+  [changeUrlInputVal]: (state, action) => Object.assign({}, state, {
+    urlInputVal: action.payload
+  }),
+  [addUrl]: (state, action) => Object.assign({}, state, {
+    urls: [state.urlInputVal].concat(state.urls)
+  }),
+  [delUrl]: (state, action) => Object.assign({}, state, {
+    urls: state.urls.filter((val, idx, ary) => {
+      return val !== action.payload
+    })
+  })
 }, {
   content: 'main',
-  cardShows: {hoge:'hoge'}
+  cardShows: {hoge:'hoge'},
+  urlInputVal: 'hoge',
+  urls: [
+    'http://hogehoge',
+    'http://fugafuga',
+    'http://piyopiyo'
+  ]
 });
 
 export default reducer;
