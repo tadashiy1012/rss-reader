@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.changeUrlInputVal = exports.flushUrls = exports.delUrl = exports.addUrl = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
+exports.changeUrlInputVal = exports.delUrl = exports.addUrl = exports.loadUrls = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
 
 var _reduxActions = require('redux-actions');
 
@@ -12,9 +12,9 @@ var slctMain = exports.slctMain = (0, _reduxActions.createAction)('SLCT_MAIN');
 var slctSet = exports.slctSet = (0, _reduxActions.createAction)('SLCT_SET');
 var setShows = exports.setShows = (0, _reduxActions.createAction)('SET_SHOWS');
 var showCard = exports.showCard = (0, _reduxActions.createAction)('SHOW_CARD');
+var loadUrls = exports.loadUrls = (0, _reduxActions.createAction)('LOAD_URLS');
 var addUrl = exports.addUrl = (0, _reduxActions.createAction)('ADD_URL');
 var delUrl = exports.delUrl = (0, _reduxActions.createAction)('DEL_URL');
-var flushUrls = exports.flushUrls = (0, _reduxActions.createAction)('FLUSH_URLS');
 var changeUrlInputVal = exports.changeUrlInputVal = (0, _reduxActions.createAction)('CHANGE_URL_INPUT_VAL');
 
 },{"redux-actions":326}],2:[function(require,module,exports){
@@ -231,10 +231,16 @@ var _ListItem2 = _interopRequireDefault(_ListItem);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var _window$require = window.require('electron');
+
+var ipcRenderer = _window$require.ipcRenderer;
+
+
 var init = false;
 var items = ['hogehoge', 'fugafuga', 'piyopiyo'];
 
 var main = function main(_ref) {
+  var handleLoad = _ref.handleLoad;
   var handleShows = _ref.handleShows;
 
   var obj = {};
@@ -246,6 +252,7 @@ var main = function main(_ref) {
     console.log('init');
     init = true;
     handleShows(obj);
+    handleLoad();
   }
   return _react2.default.createElement(
     'div',
@@ -271,6 +278,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
   return {
     handleShows: function handleShows(obj) {
       dispatch((0, _actions.setShows)(obj));
+    },
+    handleLoad: function handleLoad() {
+      dispatch((0, _actions.loadUrls)(ipcRenderer.sendSync('loadUrls')));
     }
   };
 };
@@ -462,6 +472,15 @@ var _actions = require('../actions');
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+var _window$require = window.require('electron');
+
+var ipcRenderer = _window$require.ipcRenderer;
+
+
+ipcRenderer.on('saveUrls-reply', function (ev, arg) {
+  console.log(ev, arg);
+});
+
 var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProperty(_handleActions, _actions.slctMain, function (state, action) {
   return Object.assign({}, state, {
     content: action.payload
@@ -484,21 +503,31 @@ var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProp
   return Object.assign({}, state, {
     urlInputVal: action.payload
   });
+}), _defineProperty(_handleActions, _actions.loadUrls, function (state, action) {
+  return Object.assign({}, state, {
+    urls: action.payload
+  });
 }), _defineProperty(_handleActions, _actions.addUrl, function (state, action) {
-  return Object.assign({}, state, {
-    urls: [state.urlInputVal].concat(state.urls)
+  var urls = [state.urlInputVal].concat(state.urls);
+  var obj = Object.assign({}, state, {
+    urls: urls
   });
+  ipcRenderer.send('saveUrls', urls);
+  return obj;
 }), _defineProperty(_handleActions, _actions.delUrl, function (state, action) {
-  return Object.assign({}, state, {
-    urls: state.urls.filter(function (val, idx, ary) {
-      return val !== action.payload;
-    })
+  var urls = state.urls.filter(function (val, idx, ary) {
+    return val !== action.payload;
   });
+  var obj = Object.assign({}, state, {
+    urls: urls
+  });
+  ipcRenderer.send('saveUrls', urls);
+  return obj;
 }), _handleActions), {
   content: 'main',
   cardShows: { hoge: 'hoge' },
   urlInputVal: 'hoge',
-  urls: ['http://hogehoge', 'http://fugafuga', 'http://piyopiyo']
+  urls: []
 });
 
 exports.default = reducer;
