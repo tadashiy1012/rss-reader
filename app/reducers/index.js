@@ -1,8 +1,13 @@
 import {handleAction, handleActions} from 'redux-actions';
 import {slctMain, slctSet,
   setShows, showCard,
-  addUrl, delUrl, changeUrlInputVal
+  loadUrls, addUrl, delUrl, changeUrlInputVal
 } from '../actions';
+const {ipcRenderer} = window.require('electron');
+
+ipcRenderer.on('saveUrls-reply', (ev, arg) => {
+  console.log(ev, arg);
+});
 
 const reducer = handleActions({
   [slctMain]: (state, action) => Object.assign({}, state, {
@@ -26,23 +31,32 @@ const reducer = handleActions({
   [changeUrlInputVal]: (state, action) => Object.assign({}, state, {
     urlInputVal: action.payload
   }),
-  [addUrl]: (state, action) => Object.assign({}, state, {
-    urls: [state.urlInputVal].concat(state.urls)
+  [loadUrls]: (state, action) => Object.assign({}, state, {
+    urls: action.payload
   }),
-  [delUrl]: (state, action) => Object.assign({}, state, {
-    urls: state.urls.filter((val, idx, ary) => {
+  [addUrl]: (state, action) => {
+    const urls = [state.urlInputVal].concat(state.urls);
+    const obj = Object.assign({}, state, {
+      urls: urls
+    });
+    ipcRenderer.send('saveUrls', urls);
+    return obj;
+  },
+  [delUrl]: (state, action) => {
+    const urls = state.urls.filter((val, idx, ary) => {
       return val !== action.payload
-    })
-  })
+    });
+    const obj = Object.assign({}, state, {
+      urls: urls
+    });
+    ipcRenderer.send('saveUrls', urls);
+    return obj;
+  }
 }, {
   content: 'main',
   cardShows: {hoge:'hoge'},
   urlInputVal: 'hoge',
-  urls: [
-    'http://hogehoge',
-    'http://fugafuga',
-    'http://piyopiyo'
-  ]
+  urls: []
 });
 
 export default reducer;
