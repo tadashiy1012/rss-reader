@@ -1,4 +1,5 @@
-const {app, BrowserWindow} = require('electron');
+const {app, BrowserWindow, ipcMain} = require('electron');
+const {load, save} = require('./db.js');
 
 let win;
 
@@ -22,4 +23,16 @@ app.on('activate', () => {
   if (win === null) {
     createWindow();
   }
+});
+
+ipcMain.on('loadUrls', (ev, arg) => {
+  load().then((resp) => {
+    ev.returnValue = resp;
+  });
+});
+ipcMain.on('saveUrls', (ev, arg) => {
+  save(arg).then((resp) => {
+    console.log(resp);
+    ev.sender.send('saveUrls-reply', resp);
+  });
 });
