@@ -1,12 +1,13 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {setShows} from '../actions';
+import {setShows, loadUrls} from '../actions';
 import ListItem from './ListItem.jsx';
+const {ipcRenderer} = window.require('electron');
 
 let init = false;
 const items = ['hogehoge', 'fugafuga', 'piyopiyo'];
 
-const main = ({handleShows}) => {
+const main = ({handleLoad, handleShows}) => {
   const obj = {};
   const nodes = items.map((val, idx) => {
     obj[idx] = false;
@@ -16,6 +17,7 @@ const main = ({handleShows}) => {
     console.log('init');
     init = true;
     handleShows(obj);
+    handleLoad();
   }
   return (
   <div>
@@ -35,6 +37,9 @@ const mapDispatchToProps = (dispatch, props) => {
   return {
     handleShows: (obj) => {
       dispatch(setShows(obj));
+    },
+    handleLoad: () => {
+      dispatch(loadUrls(ipcRenderer.sendSync('loadUrls')));
     }
   };
 };
