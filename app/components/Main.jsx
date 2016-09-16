@@ -1,13 +1,29 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {setShows, loadUrls} from '../actions';
+import {setShows, loadUrls, readFeeds} from '../actions';
 import ListItem from './ListItem.jsx';
+import {Promise} from 'es6-promise';
+import * as reader from 'rss-reader-lib';
 const {ipcRenderer} = window.require('electron');
 
 let init = false;
-const items = ['hogehoge', 'fugafuga', 'piyopiyo'];
+let items = ['hogefuga'];
 
-const main = ({handleLoad, handleShows}) => {
+const read = (urls) => {
+  return new Promise((resolve, reject) => {
+    const ary = [];
+    for (let url of urls) {
+      ary.push(reader.default(url));
+    }
+    Promise.all(ary).then((values) => {
+      resolve(values);
+    }, (err) => {
+      console.log(err);
+    });
+  });
+};
+
+const main = ({urls, feeds, handleLoad, handleShows}) => {
   const obj = {};
   const nodes = items.map((val, idx) => {
     obj[idx] = false;
@@ -16,9 +32,12 @@ const main = ({handleLoad, handleShows}) => {
   if (!init) {
     console.log('init');
     init = true;
-    handleShows(obj);
     handleLoad();
+    handleShows(obj);
   }
+  read(urls).then((resp) => {
+    console.log(resp);
+  });
   return (
   <div>
     <h1>main</h1>
@@ -30,7 +49,11 @@ const main = ({handleLoad, handleShows}) => {
 }
 
 const mapStateToProps = (state, props) => {
-  return state;
+  console.log(state);
+  return {
+    urls: state.urls,
+    feeds: state.feeds
+  };
 };
 
 const mapDispatchToProps = (dispatch, props) => {
