@@ -1,7 +1,8 @@
 import {handleAction, handleActions} from 'redux-actions';
 import {slctMain, slctSet,
   setShows, showCard,
-  loadUrls, addUrl, delUrl, changeUrlInputVal
+  loadUrls, addUrl, delUrl, changeUrlInputVal,
+  readFeeds
 } from '../actions';
 const {ipcRenderer} = window.require('electron');
 
@@ -51,12 +52,19 @@ const reducer = handleActions({
     });
     ipcRenderer.send('saveUrls', urls);
     return obj;
+  },
+  [readFeeds]: (state, action) => {
+    const obj = Object.assign({}, state, {
+      feeds: action.payload
+    });
+    return obj;
   }
 }, {
   content: 'main',
   cardShows: {hoge:'hoge'},
   urlInputVal: 'hoge',
-  urls: []
+  urls: [],
+  feeds: []
 });
 
 export default reducer;
