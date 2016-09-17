@@ -4,7 +4,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.readFeeds = exports.changeUrlInputVal = exports.delUrl = exports.addUrl = exports.loadUrls = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
+exports.addItems = exports.readFeeds = exports.changeUrlInputVal = exports.delUrl = exports.addUrl = exports.loadUrls = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
 
 var _reduxActions = require('redux-actions');
 
@@ -17,6 +17,7 @@ var addUrl = exports.addUrl = (0, _reduxActions.createAction)('ADD_URL');
 var delUrl = exports.delUrl = (0, _reduxActions.createAction)('DEL_URL');
 var changeUrlInputVal = exports.changeUrlInputVal = (0, _reduxActions.createAction)('CHANGE_URL_INPUT_VAL');
 var readFeeds = exports.readFeeds = (0, _reduxActions.createAction)('READ_FEEDS');
+var addItems = exports.addItems = (0, _reduxActions.createAction)('ADD_ITEMS');
 
 },{"redux-actions":565}],2:[function(require,module,exports){
 'use strict';
@@ -169,23 +170,25 @@ var Card = function Card(_ref) {
     _react2.default.createElement(
       'p',
       null,
-      val
+      val.content
     )
   );
 };
 
 var item = function item(_ref2) {
-  var text = _ref2.text;
+  var obj = _ref2.obj;
   var cardShow = _ref2.cardShow;
   var handleShow = _ref2.handleShow;
+
+  console.log(obj);
   return _react2.default.createElement(
     'li',
     { className: 'collection-item', onClick: function onClick() {
         handleShow(cardShow);
       } },
-    text,
+    obj.title,
     _react2.default.createElement('br', null),
-    cardShow ? _react2.default.createElement(Card, { val: text }) : null
+    cardShow ? _react2.default.createElement(Card, { val: obj }) : null
   );
 };
 
@@ -246,12 +249,8 @@ var ipcRenderer = _window$require.ipcRenderer;
 
 
 var init = false;
-var items = ['hogefuga'];
-
-console.log(reader);
 
 var read = function read(urls) {
-  console.log(urls);
   return new _es6Promise.Promise(function (resolve, reject) {
     var ary = [];
     var _iteratorNormalCompletion = true;
@@ -262,7 +261,6 @@ var read = function read(urls) {
       for (var _iterator = urls[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
         var url = _step.value;
 
-        console.log(url);
         ary.push(reader.default(url));
       }
     } catch (err) {
@@ -280,9 +278,7 @@ var read = function read(urls) {
       }
     }
 
-    console.log(ary);
     _es6Promise.Promise.all(ary).then(function (values) {
-      console.log(values);
       resolve(values);
     }, function (err) {
       console.log(err);
@@ -293,23 +289,79 @@ var read = function read(urls) {
 var main = function main(_ref) {
   var urls = _ref.urls;
   var feeds = _ref.feeds;
+  var items = _ref.items;
   var handleLoad = _ref.handleLoad;
   var handleShows = _ref.handleShows;
+  var handleAddItems = _ref.handleAddItems;
 
-  console.log(urls);
-  var obj = {};
+  var shows = {};
   var nodes = items.map(function (val, idx) {
-    obj[idx] = false;
-    return _react2.default.createElement(_ListItem2.default, { key: idx, idx: idx, text: val });
+    shows[idx] = false;
+    return _react2.default.createElement(_ListItem2.default, { key: idx, idx: idx, obj: val });
   });
   if (!init) {
-    console.log('init');
     init = true;
     handleLoad();
-    handleShows(obj);
+    handleShows(shows);
   }
   read(urls).then(function (resp) {
     console.log(resp);
+    var ary = [];
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = resp[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var _feeds = _step2.value;
+
+        var title = _feeds[0];
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
+
+        try {
+          for (var _iterator3 = _feeds[1][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var feed = _step3.value;
+
+            feed.title = title + ':' + feed.title;
+            ary.push(feed);
+          }
+        } catch (err) {
+          _didIteratorError3 = true;
+          _iteratorError3 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+              _iterator3.return();
+            }
+          } finally {
+            if (_didIteratorError3) {
+              throw _iteratorError3;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+
+    var sorted = ary.sort(function (a, b) {
+      return new Date(a.date).getTime - new Date(b.date).getTime;
+    }).reverse();
+    console.log(sorted);
+    handleAddItems(sorted);
   });
   return _react2.default.createElement(
     'div',
@@ -331,7 +383,8 @@ var mapStateToProps = function mapStateToProps(state, props) {
   console.log(state);
   return {
     urls: state.urls,
-    feeds: state.feeds
+    feeds: state.feeds,
+    items: state.items
   };
 };
 
@@ -342,6 +395,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
     },
     handleLoad: function handleLoad() {
       dispatch((0, _actions.loadUrls)(ipcRenderer.sendSync('loadUrls')));
+    },
+    handleAddItems: function handleAddItems(arg) {
+      dispatch((0, _actions.addItems)(arg));
     }
   };
 };
@@ -589,12 +645,17 @@ var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProp
     feeds: action.payload
   });
   return obj;
+}), _defineProperty(_handleActions, _actions.addItems, function (state, action) {
+  return Object.assign({}, state, {
+    items: action.payload
+  });
 }), _handleActions), {
   content: 'main',
   cardShows: { hoge: 'hoge' },
   urlInputVal: 'hoge',
   urls: [],
-  feeds: []
+  feeds: [],
+  items: []
 });
 
 exports.default = reducer;
