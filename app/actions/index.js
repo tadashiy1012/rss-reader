@@ -9,3 +9,4 @@ export const addUrl = createAction('ADD_URL');
 export const delUrl = createAction('DEL_URL');
 export const changeUrlInputVal = createAction('CHANGE_URL_INPUT_VAL');
 export const readFeeds = createAction('READ_FEEDS');
+export const addItems = createAction('ADD_ITEMS');
