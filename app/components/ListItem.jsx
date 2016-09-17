@@ -8,17 +8,19 @@ const f = () => {
 
 const Card = ({val}) => (
   <div className="card">
-    <p>{val}</p>
+    <p>{val.content}</p>
   </div>
 );
 
-const item = ({text, cardShow, handleShow}) => (
+const item = ({obj, cardShow, handleShow}) => {
+  console.log(obj);
+  return (
   <li className="collection-item" onClick={() => {handleShow(cardShow);}}>
-    {text}
+    {obj.title}
     <br />
-    {cardShow ? <Card val={text} /> : null}
+    {cardShow ? <Card val={obj} /> : null}
   </li>
-);
+)};
 
 const mapStateToProps = (state, props) => {
   console.log(state.cardShows);
