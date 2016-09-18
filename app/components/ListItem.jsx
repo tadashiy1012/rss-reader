@@ -1,41 +1,51 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {showCard} from '../actions';
+import {setShows} from '../actions';
 
-const f = () => {
-  console.log('click!');
-};
-
-const Card = ({val}) => (
+const Card = ({content, date, link}) => (
   <div className="card">
-    <p>{val.content}</p>
+    <p style={{'padding':'8px'}}>
+      {content}
+      <hr />
+      <div className="row">
+        <div className="col s6">
+          <div className="center-align">date:<span>{date}</span></div>
+        </div>
+        <div className="col s6">
+          <a href={link} className="waves-effect waves-teal btn center-align">src site</a>
+        </div>
+      </div>
+    </p>
   </div>
 );
 
-const item = ({obj, cardShow, handleShow}) => {
-  console.log(obj);
+const item = ({obj, show, handleSetShows}) => {
+  if (show === undefined) {
+    console.log('show is undefined');
+    handleSetShows(obj.idx, false);
+  } 
+  const dt = new Date(obj.date);
+  const date = dt.getFullYear() + '/' + (dt.getMonth() + 1) + '/' + dt.getDate() + ' ' + dt.getHours() + ':' + dt.getMinutes();
   return (
-  <li className="collection-item" onClick={() => {handleShow(cardShow);}}>
+  <li className="collection-item" onClick={() => {
+    handleSetShows(obj.idx, !show);
+  }}>
     {obj.title}
     <br />
-    {cardShow ? <Card val={obj} /> : null}
+    {show ? <Card content={obj.content} date={date} link={obj.link} /> : null}
   </li>
 )};
 
 const mapStateToProps = (state, props) => {
-  console.log(state.cardShows);
   return {
-    cardShow: state.cardShows[props.idx]
+    show: state.shows[props.obj.idx]
   };
 };
 
 const mapDispatchToProps = (dispatch, props) => {
   return {
-    handleShow: (arg) => {
-      console.log('click!!');
-      console.log(props.idx);
-      console.log(arg);
-      dispatch(showCard([props.idx, !arg]));
+    handleSetShows: (idx, value) => {
+      dispatch(setShows([idx, value]))
     }
   };
 };
