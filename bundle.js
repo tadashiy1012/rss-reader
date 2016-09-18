@@ -4,20 +4,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.addItems = exports.readFeeds = exports.changeUrlInputVal = exports.delUrl = exports.addUrl = exports.loadUrls = exports.showCard = exports.setShows = exports.slctSet = exports.slctMain = undefined;
+exports.setFeeds = exports.changeUrlInputVal = exports.delUrl = exports.addUrl = exports.loadUrls = exports.setShows = exports.slctSet = exports.slctMain = undefined;
 
 var _reduxActions = require('redux-actions');
 
 var slctMain = exports.slctMain = (0, _reduxActions.createAction)('SLCT_MAIN');
 var slctSet = exports.slctSet = (0, _reduxActions.createAction)('SLCT_SET');
 var setShows = exports.setShows = (0, _reduxActions.createAction)('SET_SHOWS');
-var showCard = exports.showCard = (0, _reduxActions.createAction)('SHOW_CARD');
 var loadUrls = exports.loadUrls = (0, _reduxActions.createAction)('LOAD_URLS');
 var addUrl = exports.addUrl = (0, _reduxActions.createAction)('ADD_URL');
 var delUrl = exports.delUrl = (0, _reduxActions.createAction)('DEL_URL');
 var changeUrlInputVal = exports.changeUrlInputVal = (0, _reduxActions.createAction)('CHANGE_URL_INPUT_VAL');
-var readFeeds = exports.readFeeds = (0, _reduxActions.createAction)('READ_FEEDS');
-var addItems = exports.addItems = (0, _reduxActions.createAction)('ADD_ITEMS');
+var setFeeds = exports.setFeeds = (0, _reduxActions.createAction)('SET_FEEDS');
 
 },{"redux-actions":565}],2:[function(require,module,exports){
 'use strict';
@@ -32,6 +30,8 @@ var _react2 = _interopRequireDefault(_react);
 
 var _reactRedux = require('react-redux');
 
+var _actions = require('../actions');
+
 var _Main = require('./Main.jsx');
 
 var _Main2 = _interopRequireDefault(_Main);
@@ -42,8 +42,21 @@ var _Settings2 = _interopRequireDefault(_Settings);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var _window$require = window.require('electron');
+
+var ipcRenderer = _window$require.ipcRenderer;
+
+
+var init = false;
+
 var content = function content(_ref) {
   var _content = _ref.content;
+  var handleLoad = _ref.handleLoad;
+
+  if (!init) {
+    init = true;
+    handleLoad();
+  }
   return _react2.default.createElement(
     'div',
     { className: 'container' },
@@ -58,14 +71,18 @@ var mapStateToProps = function mapStateToProps(state, props) {
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
-  return {};
+  return {
+    handleLoad: function handleLoad() {
+      dispatch((0, _actions.loadUrls)(ipcRenderer.sendSync('loadUrls')));
+    }
+  };
 };
 
 var Content = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(content);
 
 exports.default = Content;
 
-},{"./Main.jsx":5,"./Settings.jsx":6,"react":548,"react-redux":401}],3:[function(require,module,exports){
+},{"../actions":1,"./Main.jsx":5,"./Settings.jsx":6,"react":548,"react-redux":401}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -158,54 +175,81 @@ var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var f = function f() {
-  console.log('click!');
-};
-
 var Card = function Card(_ref) {
-  var val = _ref.val;
+  var content = _ref.content;
+  var date = _ref.date;
+  var link = _ref.link;
   return _react2.default.createElement(
     'div',
     { className: 'card' },
     _react2.default.createElement(
       'p',
-      null,
-      val.content
+      { style: { 'padding': '8px' } },
+      content,
+      _react2.default.createElement('hr', null),
+      _react2.default.createElement(
+        'div',
+        { className: 'row' },
+        _react2.default.createElement(
+          'div',
+          { className: 'col s6' },
+          _react2.default.createElement(
+            'div',
+            { className: 'center-align' },
+            'date:',
+            _react2.default.createElement(
+              'span',
+              null,
+              date
+            )
+          )
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'col s6' },
+          _react2.default.createElement(
+            'a',
+            { href: link, className: 'waves-effect waves-teal btn center-align' },
+            'src site'
+          )
+        )
+      )
     )
   );
 };
 
 var item = function item(_ref2) {
   var obj = _ref2.obj;
-  var cardShow = _ref2.cardShow;
-  var handleShow = _ref2.handleShow;
+  var show = _ref2.show;
+  var handleSetShows = _ref2.handleSetShows;
 
-  console.log(obj);
+  if (show === undefined) {
+    console.log('show is undefined');
+    handleSetShows(obj.idx, false);
+  }
+  var dt = new Date(obj.date);
+  var date = dt.getFullYear() + '/' + (dt.getMonth() + 1) + '/' + dt.getDate() + ' ' + dt.getHours() + ':' + dt.getMinutes();
   return _react2.default.createElement(
     'li',
     { className: 'collection-item', onClick: function onClick() {
-        handleShow(cardShow);
+        handleSetShows(obj.idx, !show);
       } },
     obj.title,
     _react2.default.createElement('br', null),
-    cardShow ? _react2.default.createElement(Card, { val: obj }) : null
+    show ? _react2.default.createElement(Card, { content: obj.content, date: date, link: obj.link }) : null
   );
 };
 
 var mapStateToProps = function mapStateToProps(state, props) {
-  console.log(state.cardShows);
   return {
-    cardShow: state.cardShows[props.idx]
+    show: state.shows[props.obj.idx]
   };
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
   return {
-    handleShow: function handleShow(arg) {
-      console.log('click!!');
-      console.log(props.idx);
-      console.log(arg);
-      dispatch((0, _actions.showCard)([props.idx, !arg]));
+    handleSetShows: function handleSetShows(idx, value) {
+      dispatch((0, _actions.setShows)([idx, value]));
     }
   };
 };
@@ -242,11 +286,6 @@ var reader = _interopRequireWildcard(_rssReaderLib);
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var _window$require = window.require('electron');
-
-var ipcRenderer = _window$require.ipcRenderer;
-
 
 var init = false;
 
@@ -286,82 +325,80 @@ var read = function read(urls) {
   });
 };
 
-var main = function main(_ref) {
-  var urls = _ref.urls;
-  var feeds = _ref.feeds;
-  var items = _ref.items;
-  var handleLoad = _ref.handleLoad;
-  var handleShows = _ref.handleShows;
-  var handleAddItems = _ref.handleAddItems;
+var proc = function proc(src) {
+  var ary = [];
+  var count = 0;
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
 
-  var shows = {};
-  var nodes = items.map(function (val, idx) {
-    shows[idx] = false;
-    return _react2.default.createElement(_ListItem2.default, { key: idx, idx: idx, obj: val });
-  });
-  if (!init) {
-    init = true;
-    handleLoad();
-    handleShows(shows);
-  }
-  read(urls).then(function (resp) {
-    console.log(resp);
-    var ary = [];
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
+  try {
+    for (var _iterator2 = src[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var feeds = _step2.value;
 
-    try {
-      for (var _iterator2 = resp[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-        var _feeds = _step2.value;
+      var title = feeds[0];
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
-        var title = _feeds[0];
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
-
-        try {
-          for (var _iterator3 = _feeds[1][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var feed = _step3.value;
-
-            feed.title = title + ':' + feed.title;
-            ary.push(feed);
-          }
-        } catch (err) {
-          _didIteratorError3 = true;
-          _iteratorError3 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-              _iterator3.return();
-            }
-          } finally {
-            if (_didIteratorError3) {
-              throw _iteratorError3;
-            }
-          }
-        }
-      }
-    } catch (err) {
-      _didIteratorError2 = true;
-      _iteratorError2 = err;
-    } finally {
       try {
-        if (!_iteratorNormalCompletion2 && _iterator2.return) {
-          _iterator2.return();
+        for (var _iterator3 = feeds[1][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var feed = _step3.value;
+
+          feed.idx = count += 1;
+          feed.title = title + ':' + feed.title;
+          ary.push(feed);
         }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
-        if (_didIteratorError2) {
-          throw _iteratorError2;
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
         }
       }
     }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
 
-    var sorted = ary.sort(function (a, b) {
-      return new Date(a.date).getTime - new Date(b.date).getTime;
-    }).reverse();
-    console.log(sorted);
-    handleAddItems(sorted);
+  var sorted = ary.sort(function (a, b) {
+    return new Date(a.date).getTime - new Date(b.date).getTime;
+  }).reverse();
+  return sorted;
+};
+
+var main = function main(_ref) {
+  var urls = _ref.urls;
+  var feeds = _ref.feeds;
+  var handleSetFeeds = _ref.handleSetFeeds;
+  var handleSetShows = _ref.handleSetShows;
+
+  if (!init) {
+    init = true;
+    read(urls).then(function (resp) {
+      handleSetFeeds(proc(resp));
+    });
+  }
+  var nodes = feeds.map(function (val, idx) {
+    return _react2.default.createElement(_ListItem2.default, { key: idx, obj: val });
   });
   return _react2.default.createElement(
     'div',
@@ -380,24 +417,17 @@ var main = function main(_ref) {
 };
 
 var mapStateToProps = function mapStateToProps(state, props) {
-  console.log(state);
   return {
     urls: state.urls,
-    feeds: state.feeds,
-    items: state.items
+    feeds: state.feeds
   };
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch, props) {
   return {
-    handleShows: function handleShows(obj) {
-      dispatch((0, _actions.setShows)(obj));
-    },
-    handleLoad: function handleLoad() {
-      dispatch((0, _actions.loadUrls)(ipcRenderer.sendSync('loadUrls')));
-    },
-    handleAddItems: function handleAddItems(arg) {
-      dispatch((0, _actions.addItems)(arg));
+    handleSetFeeds: function handleSetFeeds(arg) {
+      console.log(arg);
+      dispatch((0, _actions.setFeeds)(arg));
     }
   };
 };
@@ -607,15 +637,10 @@ var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProp
     content: action.payload
   });
 }), _defineProperty(_handleActions, _actions.setShows, function (state, action) {
+  var shows = Object.assign({}, state.shows, _defineProperty({}, action.payload[0], action.payload[1]));
   return Object.assign({}, state, {
-    cardShows: action.payload
+    shows: shows
   });
-}), _defineProperty(_handleActions, _actions.showCard, function (state, action) {
-  var obj = Object.assign({}, state.cardShows, _defineProperty({}, action.payload[0], action.payload[1]));
-  var result = Object.assign({}, state, {
-    cardShows: obj
-  });
-  return result;
 }), _defineProperty(_handleActions, _actions.changeUrlInputVal, function (state, action) {
   return Object.assign({}, state, {
     urlInputVal: action.payload
@@ -640,22 +665,17 @@ var reducer = (0, _reduxActions.handleActions)((_handleActions = {}, _defineProp
   });
   ipcRenderer.send('saveUrls', urls);
   return obj;
-}), _defineProperty(_handleActions, _actions.readFeeds, function (state, action) {
+}), _defineProperty(_handleActions, _actions.setFeeds, function (state, action) {
   var obj = Object.assign({}, state, {
     feeds: action.payload
   });
   return obj;
-}), _defineProperty(_handleActions, _actions.addItems, function (state, action) {
-  return Object.assign({}, state, {
-    items: action.payload
-  });
 }), _handleActions), {
   content: 'main',
-  cardShows: { hoge: 'hoge' },
-  urlInputVal: 'hoge',
+  shows: {},
+  urlInputVal: '',
   urls: [],
-  feeds: [],
-  items: []
+  feeds: []
 });
 
 exports.default = reducer;
