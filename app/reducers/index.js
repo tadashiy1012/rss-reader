@@ -1,8 +1,8 @@
 import {handleAction, handleActions} from 'redux-actions';
 import {slctMain, slctSet,
-  setShows, showCard,
+  setShows, 
   loadUrls, addUrl, delUrl, changeUrlInputVal,
-  readFeeds, addItems
+  setFeeds
 } from '../actions';
 const {ipcRenderer} = window.require('electron');
 
@@ -17,17 +17,13 @@ const reducer = handleActions({
   [slctSet]: (state, action) => Object.assign({}, state, {
     content: action.payload
   }),
-  [setShows]: (state, action) => Object.assign({}, state, {
-    cardShows: action.payload
-  }),
-  [showCard]: (state, action) => {
-    let obj = Object.assign({}, state.cardShows, {
+  [setShows]: (state, action) => {
+    const shows = Object.assign({}, state.shows, {
       [action.payload[0]]: action.payload[1]
     });
-    let result = Object.assign({}, state, {
-      cardShows: obj
+    return Object.assign({}, state, {
+      shows: shows 
     });
-    return result;
   },
   [changeUrlInputVal]: (state, action) => Object.assign({}, state, {
     urlInputVal: action.payload
@@ -53,22 +49,18 @@ const reducer = handleActions({
     ipcRenderer.send('saveUrls', urls);
     return obj;
   },
-  [readFeeds]: (state, action) => {
+  [setFeeds]: (state, action) => {
     const obj = Object.assign({}, state, {
       feeds: action.payload
     });
     return obj;
-  },
-  [addItems]: (state, action) => Object.assign({}, state, {
-    items: action.payload
-  })
+  }
 }, {
   content: 'main',
-  cardShows: {hoge:'hoge'},
-  urlInputVal: 'hoge',
+  shows: {},
+  urlInputVal: '',
   urls: [],
-  feeds: [],
-  items: []
+  feeds: []
 });
 
 export default reducer;
